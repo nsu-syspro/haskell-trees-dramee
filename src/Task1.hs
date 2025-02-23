@@ -20,6 +20,14 @@ type Forest a = [Tree a]
 data Order = PreOrder | InOrder | PostOrder
   deriving Show
 
+maybeToList :: Maybe a -> [a]
+maybeToList Nothing  = []
+maybeToList (Just x) = [x]
+
+intercalate :: [a] -> [[a]] -> [a]
+intercalate _   []     = []
+intercalate sep (x:xs) = x ++ concatMap (sep ++) xs
+
 -- * Function definitions
 
 -- | Returns values of given 'Tree' in specified 'Order' with optional leaf value
@@ -37,8 +45,14 @@ torder :: Order    -- ^ Order of resulting traversal
        -> Maybe a  -- ^ Optional leaf value
        -> Tree a   -- ^ Tree to traverse
        -> [a]      -- ^ List of values in specified order
-torder = error "TODO: define torder"
 
+torder _     m Leaf                = maybeToList m
+torder PreOrder m (Branch a left right) = 
+    a : (torder PreOrder m left ++ torder PreOrder m right)
+torder InOrder  m (Branch a left right) = 
+    torder InOrder m left ++ [a] ++ torder InOrder m right
+torder PostOrder m (Branch a left right) = 
+    torder PostOrder m left ++ torder PostOrder m right ++ [a]
 -- | Returns values of given 'Forest' separated by optional separator
 -- where each 'Tree' is traversed in specified 'Order' with optional leaf value
 --
@@ -56,5 +70,4 @@ forder :: Order     -- ^ Order of tree traversal
        -> Maybe a   -- ^ Optional leaf value
        -> Forest a  -- ^ List of trees to traverse
        -> [a]       -- ^ List of values in specified tree order
-forder = error "TODO: define forder"
-
+forder order msep mleaf forest = intercalate (maybeToList msep) (map (torder order mleaf) forest)
